@@ -1,0 +1,163 @@
+{
+  "info": {
+    "name": "AFTER/FORM — Step 6: Sanatçı Girişi",
+    "description": "Cookie oturumu ile sanatçı girişi. Cookie jar açık, Authorization No Auth olmalı. Önce sanatçı hesabını Create-Artist.ps1 ile oluştur ve backend'i yeniden başlat. İstekleri sırayla gönder. password değişkeni bilerek boş bırakıldı; kendi parolanı yalnızca yerel kullanımında doldur ve kullanımdan sonra temizle. Parola doldurulmuş koleksiyonu paylaşma veya export etme. Post-response betikleri yalnızca CSRF token alır; test assertion içermez.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "userName",
+      "value": "mira.sol",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "csrfToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "01 — Giriş öncesi CSRF token",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/csrf",
+        "description": "Önce bu isteği gönder. Yanıttaki requestToken, csrfToken değişkenine alınır; ilişkili çerez cookie jar'da tutulur."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (typeof body.requestToken === 'string') {",
+              "  pm.collectionVariables.set('csrfToken', body.requestToken);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 — Sanatçı girişi",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-AF-CSRF",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{afLoginBody}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/auth/login",
+        "description": "Önce 01 isteğini gönder, userName ve password değişkenlerini kendi hesabına göre doldur. Hazır pre-request betiği, tırnak ve ters eğik çizgi gibi karakterleri doğru JSON kodlamasıyla gönderir. afLoginBody yalnızca geçici request/run scope içindedir; koleksiyon değişkenlerine kaydedilmez. Başarılı girişte cookie jar oturum çerezini saklar. Parolanı koleksiyonla birlikte paylaşma."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set('afLoginBody', JSON.stringify({",
+              "  userName: String(pm.variables.get('userName') ?? ''),",
+              "  password: String(pm.variables.get('password') ?? '')",
+              "}));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 — Hesabım",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/me",
+        "description": "Giriş yaptıysan id, userName ve displayName gelir. Oturum yoksa 401 alırsın. Cookie başlığını elle ekleme; Postman cookie jar kullanılır. Çıkıştan sonra aynı isteği tekrar gönderebilirsin."
+      }
+    },
+    {
+      "name": "04 — Giriş sonrası CSRF token yenile",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/csrf",
+        "description": "Login ile kullanıcı kimliği değişti. Logout öncesinde token'ı mevcut giriş oturumuyla yeniden al. Girişten önceki token'ı tekrar kullanma."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (typeof body.requestToken === 'string') {",
+              "  pm.collectionVariables.set('csrfToken', body.requestToken);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 — Çıkış",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-AF-CSRF",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/logout",
+        "description": "Önce 04 isteğiyle yeni CSRF token al. Başarılı çıkış 204 ve boş gövde döndürür. Sonra 03 isteğini tekrar göndermek oturumun durumunu gösterir."
+      }
+    }
+  ]
+}

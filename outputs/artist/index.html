@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090a09">
+  <title>My Demos — AFTER/FORM Artist Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/artist/portal.css">
+</head>
+<body data-auth-page="artist">
+  <header class="topbar">
+    <a class="brand" href="/">AFTER<span>/</span>FORM</a>
+    <div class="top-right">
+      <span class="top-label">Artist portal</span>
+      <a class="site-link" href="/">Back to label ↗</a>
+      <button class="sign-out" id="artistLogout" type="button" disabled>Sign out</button>
+    </div>
+  </header>
+
+  <div class="auth-status">
+    <p id="authMessage" role="status" aria-live="polite" aria-atomic="true" tabindex="-1">Opening your artist space…</p>
+    <button class="auth-retry" id="authRetry" type="button" hidden>Try again</button>
+    <noscript><p>Please enable JavaScript to open your artist account.</p></noscript>
+  </div>
+
+  <main class="dashboard" data-auth-content hidden>
+    <section class="page-intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">AFTER/FORM / PRIVATE ARTIST AREA</p>
+        <h1 id="page-title">Your demos<span>.</span></h1>
+        <p class="intro-copy">Every track you send has a place here. Follow its status, then come back when there’s something new.</p>
+      </div>
+      <div class="artist-card" data-artist-card aria-label="Artist account">
+        <span class="avatar" data-artist-initials aria-hidden="true"></span>
+        <span>
+          <span class="artist-name" data-artist-name></span>
+          <span class="artist-username" data-artist-username></span>
+          <span class="artist-role">Artist account</span>
+        </span>
+      </div>
+    </section>
+
+    <div class="archive-note" role="note">
+      <strong>YOUR PRIVATE ARCHIVE</strong>
+      <span>Your recordings, their current status, and a place for what comes next.</span>
+    </div>
+
+    <section aria-labelledby="history-title">
+      <div class="section-head">
+        <h2 id="history-title">Demo history / <span id="history-total">—</span></h2>
+        <div class="history-actions">
+          <button class="quiet-button" id="history-refresh" type="button" disabled>Refresh ↻</button>
+          <a class="send-demo" href="/artist/submit/">
+            <span>Send a demo ↗</span><small>SUBMIT A NEW TRACK</small>
+          </a>
+        </div>
+      </div>
+
+      <div class="status-tabs" aria-label="Filter demo history by status">
+        <button class="status-tab" type="button" data-status="" aria-pressed="true"><span>All demos</span><b data-count="total">—</b></button>
+        <button class="status-tab" type="button" data-status="Submitted" aria-pressed="false"><span>Submitted</span><b data-count="submitted">—</b></button>
+        <button class="status-tab" type="button" data-status="InReview" aria-pressed="false"><span>In review</span><b data-count="inReview">—</b></button>
+        <button class="status-tab" type="button" data-status="Accepted" aria-pressed="false"><span>Accepted</span><b data-count="accepted">—</b></button>
+        <button class="status-tab" type="button" data-status="Rejected" aria-pressed="false"><span>Rejected</span><b data-count="rejected">—</b></button>
+      </div>
+      <form class="history-search" id="history-search" role="search">
+        <label for="demo-search">Find a track</label>
+        <input id="demo-search" type="search" maxlength="100" placeholder="Search by title or genre" autocomplete="off">
+        <button class="quiet-button" type="submit">Search ↗</button>
+      </form>
+      <p class="history-loading" id="history-loading" role="status">Loading your demo history…</p>
+      <div class="history-error" id="history-error" role="alert" hidden>
+        <p id="history-error-text"></p>
+        <button class="quiet-button" id="history-retry" type="button">Try again</button>
+      </div>
+      <div class="demo-list" id="history-list" aria-busy="true"></div>
+      <div class="empty-state" id="history-empty" hidden>
+        <div>
+          <div class="empty-mark" aria-hidden="true">＋</div>
+          <h3 id="empty-title">Your first demo starts here.</h3>
+          <p id="empty-copy">Send a recording to AFTER/FORM. Its status will appear in your private history.</p>
+          <a class="send-demo" id="empty-send" href="/artist/submit/">Send your first demo ↗</a>
+          <button class="quiet-button" id="clear-filters" type="button" hidden>Clear filters</button>
+        </div>
+      </div>
+      <nav class="history-pages" id="history-pages" aria-label="Demo history pages" hidden>
+        <button class="quiet-button" id="previous-page" type="button" disabled>← Previous</button>
+        <span id="page-label"></span>
+        <button class="quiet-button" id="next-page" type="button" disabled>Next →</button>
+      </nav>
+    </section>
+
+    <div class="footnote">
+      <span class="refresh-time" id="refresh-time">Private artist portal / Demo history</span>
+      <a href="/">Return to AFTER/FORM ↗</a>
+    </div>
+  </main>
+  <script src="/artist/auth.js" defer></script>
+  <script src="/artist/demos-common.js" defer></script>
+  <script src="/artist/history.js" defer></script>
+</body>
+</html>

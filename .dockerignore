@@ -1,0 +1,13 @@
+# Allow only application sources and public frontend assets into the build.
+**
+!NuGet.config
+!backend/
+!backend/Afterform.Api/
+!backend/Afterform.Api/**
+backend/Afterform.Api/bin/
+backend/Afterform.Api/obj/
+backend/Afterform.Api/Properties/
+!outputs/
+!outputs/**
+!docker/
+!docker/Dockerfile

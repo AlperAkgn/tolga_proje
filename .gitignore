@@ -1,0 +1,9 @@
+# Local credentials and runtime output
+.local/
+work/docker-config/
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+.vs/
+**/node_modules/

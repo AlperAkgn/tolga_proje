@@ -1,0 +1,14 @@
+@baseUrl = http://localhost:5000
+
+### Is the .NET API running?
+GET {{baseUrl}}/api/health/live
+Accept: application/json
+
+### Is MySQL reachable, with all migrations applied?
+GET {{baseUrl}}/api/health/ready
+Accept: application/json
+
+### Inspect the schema in Development only
+GET {{baseUrl}}/api/health/schema
+Accept: application/json
+

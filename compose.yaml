@@ -1,0 +1,56 @@
+name: afterform
+
+services:
+  backend:
+    image: afterform-api:local
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${AF_HTTP_PORT:-8080}:8080"
+    environment:
+      # This Compose file is for local learning over HTTP, not public hosting.
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      Afterform__SettingsFile: /run/secrets/afterform_runtime
+      DemoStorage__RootPath: /var/afterform/demos
+      DataProtection__KeysPath: /var/afterform/keys
+    secrets:
+      - afterform_runtime
+    volumes:
+      - type: bind
+        source: ./.local/uploads/demos
+        target: /var/afterform/demos
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./.local/docker/data-protection
+        target: /var/afterform/keys
+        bind:
+          create_host_path: false
+    networks:
+      - database
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
+    cpus: 2.0
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+secrets:
+  afterform_runtime:
+    file: ./.local/docker/backend.settings.json
+
+networks:
+  database:
+    name: afterform-local
+    external: true

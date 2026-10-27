@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090a09">
+  <title>Send a Demo — AFTER/FORM Artist Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090a09;
+      --panel: #10110f;
+      --panel-raised: #141512;
+      --fg: #f0eee8;
+      --muted: #8f928d;
+      --line: #292b28;
+      --acid: #d5ff52;
+      --mono: "DM Mono", monospace;
+      --sans: "Manrope", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100svh;
+      overflow-x: hidden;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--sans);
+    }
+    body::before {
+      position: fixed;
+      z-index: -1;
+      inset: 0;
+      background-image: linear-gradient(#ffffff07 1px, transparent 1px), linear-gradient(90deg, #ffffff07 1px, transparent 1px);
+      background-size: 8.333vw 8.333vw;
+      content: "";
+      pointer-events: none;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, select, textarea { font: inherit; }
+    [hidden] { display: none !important; }
+    .topbar {
+      position: sticky;
+      z-index: 5;
+      top: 0;
+      display: flex;
+      min-height: 76px;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #ffffff17;
+      background: #090a09ef;
+      padding: 0 5vw;
+      backdrop-filter: blur(18px);
+    }
+    .brand { font-size: 21px; font-weight: 800; letter-spacing: -.09em; }
+    .brand span { color: var(--acid); }
+    .top-right { display: flex; align-items: center; gap: clamp(18px, 4vw, 52px); }
+    .top-label, .eyebrow, .micro {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .top-label { color: #aaaDA5; }
+    .site-link { color: #c4c5be; font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; transition: color .2s; }
+    .site-link:hover { color: var(--acid); }
+    .sign-out, .auth-retry { border: 1px solid var(--line); background: transparent; color: #c4c5be; padding: 10px 12px; cursor: pointer; font-family: var(--mono); font-size: 8px; letter-spacing: .08em; text-transform: uppercase; }
+    .sign-out:hover, .auth-retry:hover { border-color: #d5ff5266; color: var(--acid); }
+    .sign-out:disabled { opacity: .5; cursor: wait; }
+    .sign-out:focus-visible, .auth-retry:focus-visible { outline: 2px solid var(--acid); outline-offset: 4px; }
+    .auth-status { width: min(1080px, 90vw); margin: 26px auto 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+    .auth-status p:empty { display: none; }
+    .auth-status .is-error { color: #d9a49b; }
+    .auth-status p { margin: 0 0 12px; }
+    .artist-card { display: flex; align-items: center; gap: 12px; width: fit-content; max-width: 100%; margin: 24px 0 0; border: 1px solid var(--line); background: #ffffff04; padding: 10px 16px 10px 10px; }
+    .avatar { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; border: 1px solid #d5ff5240; border-radius: 50%; background: #d5ff5210; color: var(--acid); font-family: var(--mono); font-size: 10px; }
+    .artist-name { display: block; font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+    .artist-username { display: block; margin-top: 4px; color: var(--muted); font-family: var(--mono); font-size: 9px; overflow-wrap: anywhere; }
+    .page {
+      width: min(1080px, 90vw);
+      margin: 0 auto;
+      padding: clamp(55px, 8vw, 100px) 0 110px;
+      animation: arrive .75s cubic-bezier(.2,.7,.2,1) both;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 36px;
+      color: #a3a69e;
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      transition: color .2s, transform .2s;
+    }
+    .back-link:hover { transform: translateX(-3px); color: var(--acid); }
+    .intro { display: flex; align-items: end; justify-content: space-between; gap: 36px; margin-bottom: 45px; }
+    .eyebrow { margin: 0; color: var(--acid); }
+    h1 {
+      margin: 16px 0 13px;
+      font-size: clamp(58px, 9vw, 100px);
+      font-weight: 600;
+      line-height: .84;
+      letter-spacing: -.1em;
+    }
+    h1 span { color: var(--acid); }
+    .intro-copy { max-width: 380px; margin: 0 0 3px; color: var(--muted); font-size: 13px; line-height: 1.75; }
+    .preview-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 30px;
+      border: 1px solid #d5ff5228;
+      background: linear-gradient(90deg, #d5ff5209, #ffffff03);
+      padding: 14px 16px;
+      color: #b3b5ad;
+      font-size: 10px;
+      line-height: 1.6;
+    }
+    .preview-banner strong { flex: 0 0 auto; color: var(--acid); font-family: var(--mono); font-size: 8px; font-weight: 400; letter-spacing: .12em; }
+    .form-layout { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 32px; align-items: start; }
+    .form-card { border: 1px solid var(--line); background: #ffffff03; padding: clamp(22px, 4vw, 40px); }
+    .form-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 32px; padding-bottom: 17px; border-bottom: 1px solid var(--line); }
+    .form-top h2 { margin: 0; color: #d9dad4; font-family: var(--mono); font-size: 10px; font-weight: 400; letter-spacing: .13em; text-transform: uppercase; }
+    .required-note { color: #777a73; font-family: var(--mono); font-size: 8px; letter-spacing: .08em; }
+    .field { margin-bottom: 25px; }
+    .field label, .field-label {
+      display: block;
+      margin-bottom: 10px;
+      color: #c9cbc4;
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .field label span, .field-label span { color: var(--acid); }
+    .control {
+      width: 100%;
+      min-height: 52px;
+      border: 1px solid #343631;
+      border-radius: 1px;
+      outline: none;
+      background: #0d0e0c;
+      color: var(--fg);
+      padding: 0 15px;
+      font-size: 12px;
+      transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+    .control::placeholder { color: #686b64; }
+    .control:focus { border-color: #d5ff5278; background: #10110e; box-shadow: 0 0 0 3px #d5ff520b; }
+    select.control { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 12 12'%3E%3Cpath d='m2 4 4 4 4-4' stroke='%2390928d' stroke-width='1.2'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 42px; }
+    select.control:invalid { color: #686b64; }
+    select.control option { background: #10110f; color: var(--fg); }
+    .field-help { margin: 9px 0 0; color: #777a73; font-size: 10px; line-height: 1.6; }
+    .dropzone {
+      position: relative;
+      display: grid;
+      min-height: 180px;
+      place-items: center;
+      border: 1px dashed #55594f;
+      background: linear-gradient(145deg, #ffffff04, transparent 70%);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .dropzone:hover, .dropzone.is-over { border-color: #d5ff5280; background: #d5ff5208; }
+    .dropzone.has-file { border-style: solid; border-color: #d5ff5266; }
+    .dropzone input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+    .upload-mark { display: grid; width: 42px; height: 42px; place-items: center; margin: 0 auto 14px; border: 1px solid #d5ff5240; border-radius: 50%; color: var(--acid); font-size: 18px; }
+    .drop-title { margin: 0; color: #e5e4de; font-size: 12px; font-weight: 600; }
+    .drop-subtitle { margin: 7px 0 0; color: #777a73; font-size: 10px; }
+    .file-name { overflow-wrap: anywhere; margin: 12px 0 0; color: var(--acid); font-family: var(--mono); font-size: 9px; line-height: 1.5; }
+    .file-remove { position: absolute; top: 10px; right: 12px; border: 0; background: transparent; color: #989b92; padding: 6px; font-family: var(--mono); font-size: 8px; cursor: pointer; }
+    .file-remove:hover { color: var(--acid); }
+    .textarea { min-height: 125px; padding: 14px 15px; resize: vertical; line-height: 1.6; }
+    .field-bottom { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+    .field-bottom .field-help { margin: 0; }
+    .counter { color: #6d7069; font-family: var(--mono); font-size: 8px; }
+    .consent {
+      display: grid;
+      grid-template-columns: 16px 1fr;
+      gap: 12px;
+      align-items: start;
+      margin: 3px 0 28px;
+      color: #9b9e96;
+      font-size: 10px;
+      line-height: 1.65;
+      cursor: pointer;
+    }
+    .consent input { width: 15px; height: 15px; margin: 2px 0 0; accent-color: var(--acid); cursor: pointer; }
+    .submit-button {
+      display: flex;
+      width: 100%;
+      min-height: 54px;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #d5ff5270;
+      border-radius: 1px;
+      background: #d5ff5210;
+      color: var(--acid);
+      padding: 0 17px;
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .2s, border-color .2s, transform .2s;
+    }
+    .submit-button:hover { transform: translateY(-2px); border-color: #d5ff52aa; background: #d5ff521a; }
+    .submit-button:disabled { opacity: .45; cursor: wait; transform: none; }
+    .control:disabled { opacity: .65; }
+    .submit-button:focus-visible, .file-remove:focus-visible, .back-link:focus-visible { outline: 2px solid var(--acid); outline-offset: 4px; }
+    .form-message { display: none; margin: 18px 0 0; border: 1px solid #d5ff5240; background: #d5ff5209; padding: 14px 15px; color: #c4c7bd; font-size: 11px; line-height: 1.7; }
+    .form-message.is-visible { display: block; animation: arrive .35s ease both; }
+    .form-message strong { display: block; margin-bottom: 4px; color: var(--acid); font-family: var(--mono); font-size: 8px; font-weight: 400; letter-spacing: .12em; text-transform: uppercase; }
+    .form-message.is-error { border-color: #d9a49b55; color: #d9a49b; background: #d9a49b08; }
+    .form-message.is-error strong { color: #d9a49b; }
+    .upload-progress { margin-top: 20px; color: var(--muted); font-size: 10px; line-height: 1.7; }
+    .upload-progress progress { display: block; width: 100%; height: 3px; margin-bottom: 10px; border: 0; accent-color: var(--acid); background: var(--line); }
+    .upload-progress progress::-webkit-progress-bar { background: var(--line); }
+    .upload-progress progress::-webkit-progress-value { background: #b0b99a; transition: width .15s; }
+    .saved-demo { margin-top: 28px; border-top: 1px solid #d5ff5240; padding-top: 24px; }
+    .saved-demo h3 { margin: 10px 0; font-size: 25px; font-weight: 500; letter-spacing: -.04em; overflow-wrap: anywhere; }
+    .saved-demo .receipt-label { color: var(--acid); font-family: var(--mono); font-size: 8px; letter-spacing: .12em; }
+    .saved-demo p { color: var(--muted); font-size: 11px; line-height: 1.8; overflow-wrap: anywhere; }
+    .saved-demo audio { display: block; width: 100%; height: 40px; margin: 18px 0; }
+    .receipt-links { display: flex; gap: 20px; flex-wrap: wrap; }
+    .receipt-links a { color: #cbd1be; font-family: var(--mono); font-size: 9px; line-height: 2; text-decoration: underline; text-underline-offset: 4px; }
+    .side-note { border-top: 1px solid var(--line); padding-top: 19px; }
+    .side-note + .side-note { margin-top: 26px; }
+    .side-note h3 { margin: 0 0 10px; color: #c2c4bc; font-family: var(--mono); font-size: 9px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; }
+    .side-note p { margin: 0; color: #7e8179; font-size: 10px; line-height: 1.75; }
+    .format-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+    .format-list span { border: 1px solid #30322d; color: #a1a49b; padding: 6px 8px; font-family: var(--mono); font-size: 8px; }
+    .footnote { display: flex; justify-content: space-between; gap: 16px; margin-top: 35px; color: #696c65; font-family: var(--mono); font-size: 8px; letter-spacing: .09em; line-height: 1.7; text-transform: uppercase; }
+    .footnote a { transition: color .2s; }
+    .footnote a:hover { color: var(--acid); }
+    @keyframes arrive { from { opacity: 0; transform: translateY(14px); filter: blur(4px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+    @media (max-width: 760px) {
+      .topbar { min-height: 68px; padding: 0 5vw; }
+      .top-label { display: none; }
+      .page { padding-top: 58px; }
+      .intro { display: block; }
+      .intro-copy { margin-top: 24px; }
+      .preview-banner { align-items: flex-start; flex-direction: column; gap: 6px; }
+      .form-layout { grid-template-columns: 1fr; gap: 36px; }
+      .side-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+      .side-note + .side-note { margin-top: 0; }
+      .footnote { flex-direction: column; }
+    }
+    @media (max-width: 460px) {
+      .brand { font-size: 19px; }
+      .site-link { font-size: 8px; }
+      .top-right { gap: 12px; }
+      h1 { font-size: 62px; }
+      .form-card { padding: 22px 17px; }
+      .form-top { align-items: flex-start; flex-direction: column; gap: 9px; }
+      .side-notes { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body data-auth-page="artist">
+  <header class="topbar">
+    <a class="brand" href="/">AFTER<span>/</span>FORM</a>
+    <div class="top-right">
+      <span class="top-label">Artist portal</span>
+      <a class="site-link" href="/">Back to label ↗</a>
+      <button class="sign-out" id="artistLogout" type="button" disabled>Sign out</button>
+    </div>
+  </header>
+
+  <div class="auth-status">
+    <p id="authMessage" role="status" aria-live="polite" aria-atomic="true" tabindex="-1">Opening your artist space…</p>
+    <button class="auth-retry" id="authRetry" type="button" hidden>Try again</button>
+    <noscript><p>Please enable JavaScript to open your artist account.</p></noscript>
+  </div>
+
+  <main class="page" data-auth-content hidden>
+    <a class="back-link" href="/artist/">← Back to your demos</a>
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">AFTER/FORM / NEW SUBMISSION</p>
+        <h1 id="page-title">Send a demo<span>.</span></h1>
+        <div class="artist-card" data-artist-card aria-label="Artist account">
+          <span class="avatar" data-artist-initials aria-hidden="true"></span>
+          <span>
+            <span class="artist-name" data-artist-name></span>
+            <span class="artist-username" data-artist-username></span>
+          </span>
+        </div>
+      </div>
+      <p class="intro-copy">Share a new track with the label. Add the essentials, attach an audio file, and keep a copy of your original recording.</p>
+    </section>
+
+    <div class="preview-banner" role="note">
+      <strong>YOUR PRIVATE SUBMISSION</strong>
+      <span>One audio file, up to 100 MB. Your demo is saved to your artist account when you send it.</span>
+    </div>
+
+    <div class="form-layout">
+      <form class="form-card" id="demo-form" enctype="multipart/form-data" novalidate>
+        <div class="form-top">
+          <h2>Track information</h2>
+          <span class="required-note"><span style="color:var(--acid)">*</span> REQUIRED FIELDS</span>
+        </div>
+
+        <div class="field">
+          <label for="track-title">Track title <span>*</span></label>
+          <input class="control" id="track-title" name="trackTitle" type="text" maxlength="100" placeholder="Give your track a name" autocomplete="off" required>
+        </div>
+
+        <div class="field">
+          <label for="genre">Primary genre <span>*</span></label>
+          <select class="control" id="genre" name="genre" required>
+            <option value="" selected disabled>Select a genre</option>
+            <option>Alternative pop</option>
+            <option>Electronic</option>
+            <option>Indie rock</option>
+            <option>R&amp;B / Soul</option>
+            <option>Experimental</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Audio file <span>*</span></span>
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose one MP3, WAV or FLAC audio file" aria-describedby="file-help">
+            <input id="audio-file" name="audioFile" type="file" accept=".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/x-wav,audio/flac" tabindex="-1">
+            <span>
+              <span class="upload-mark" aria-hidden="true">↑</span>
+              <span class="drop-title" id="drop-title">Drop your audio here or browse</span>
+              <span class="drop-subtitle" id="file-help">MP3, WAV or FLAC · one file · up to 100 MB</span>
+              <span class="file-name" id="file-name" aria-live="polite"></span>
+            </span>
+            <button class="file-remove" id="remove-file" type="button" hidden>REMOVE ×</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="artist-note">A note about the track <span style="color:#777a73">· OPTIONAL</span></label>
+          <textarea class="control textarea" id="artist-note" name="artistNote" maxlength="500" placeholder="A little context for the people listening — anything you’d like us to know."></textarea>
+          <div class="field-bottom">
+            <p class="field-help">Keep it brief; you can add more details later.</p>
+            <span class="counter" id="note-count">0 / 500</span>
+          </div>
+        </div>
+
+        <label class="consent" for="rights-confirmation">
+          <input id="rights-confirmation" name="rightsConfirmation" type="checkbox" required>
+          <span>I confirm I have the right to share this recording with AFTER/FORM for review. <span style="color:var(--acid)">*</span></span>
+        </label>
+
+        <button class="submit-button" id="send-demo" type="submit" disabled><span id="send-label">Preparing uploads…</span><span aria-hidden="true">↗</span></button>
+        <div class="upload-progress" id="upload-progress" role="status" aria-live="polite" hidden>
+          <progress id="upload-bar" max="100" value="0" aria-label="Audio upload progress"></progress>
+          <span id="upload-state">Preparing your demo…</span>
+        </div>
+        <div class="form-message" id="form-message" role="status" aria-live="polite" tabindex="-1"></div>
+        <section class="saved-demo" id="saved-demo" aria-labelledby="saved-title" hidden>
+          <span class="receipt-label" id="saved-status">SUBMITTED</span>
+          <h3 id="saved-title"></h3>
+          <p id="saved-detail"></p>
+          <audio id="saved-audio" controls preload="none" aria-label="Listen to your submitted demo"></audio>
+          <p id="playback-note" hidden>Your browser couldn’t play this recording. Download the original, or sign in again if your session has ended.</p>
+          <div class="receipt-links">
+            <a id="saved-download" href="#">Download original ↙</a>
+            <a id="saved-receipt" href="#">View demo details ↗</a>
+            <a href="/artist/">View all my demos ↗</a>
+          </div>
+        </section>
+      </form>
+
+      <aside class="side-notes" aria-label="Submission guidance">
+        <section class="side-note">
+          <h3>Before you send</h3>
+          <p>Upload one finished demo mix. Make sure the audio is yours to share and that the file plays correctly.</p>
+          <div class="format-list" aria-label="Accepted formats"><span>MP3</span><span>WAV</span><span>FLAC</span></div>
+        </section>
+        <section class="side-note">
+          <h3>What happens next</h3>
+          <p>Your recording is submitted to the label. Open your demo history to follow its status, listen again or download the original. Keep a copy of your recording.</p>
+        </section>
+        <section class="side-note">
+          <h3>Private by design</h3>
+          <p>Your upload belongs to your signed-in artist account. Another artist cannot open your recording through its link.</p>
+        </section>
+      </aside>
+    </div>
+
+    <div class="footnote">
+      <span>AFTER/FORM artist portal / Private demo submission</span>
+      <a href="/artist/">Return to your demos ↗</a>
+    </div>
+  </main>
+
+  <script src="/artist/auth.js" defer></script>
+  <script src="/artist/demos-common.js" defer></script>
+  <script src="/artist/submit/submit.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "afterform-postman-checks",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Local Postman collection runner for the AFTER/FORM learning project",
+  "dependencies": {
+    "newman": "6.2.2"
+  }
+}

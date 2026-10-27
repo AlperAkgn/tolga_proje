@@ -1,0 +1,327 @@
+{
+  "info": {
+    "name": "AFTER/FORM — Step 7: Gerçek Demo Yükleme",
+    "description": "Mevcut sanatçı hesabıyla giriş yapıp gerçek ses dosyası gönder. Önce DemoFileIntegrity migration uygulanmalı ve backend yeniden başlatılmalı. İstekleri sırayla kullan. 05 isteğinde Body/form-data/audioFile satırında kendi dosyanı seç; Content-Type elle yazılmaz. Cookie jar açık ve No Auth olmalı. password bilerek boş bırakıldı; yerel kullanımdan sonra temizle. Kısa post-response betikleri yalnızca csrfToken/demoId değişkenlerini alır; assertion yoktur. Koleksiyon ajan tarafından çalıştırılmadı.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "userName",
+      "value": "mira.sol",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "csrfToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "demoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "trackTitle",
+      "value": "My first real demo",
+      "type": "string"
+    },
+    {
+      "key": "genre",
+      "value": "Electronic",
+      "type": "string"
+    },
+    {
+      "key": "artistNote",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "01 — Giriş öncesi CSRF token",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/csrf",
+        "description": "Önce bu isteği gönder. Yanıttaki requestToken, csrfToken değişkenine alınır; ilişkili çerez cookie jar'da tutulur."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (typeof body.requestToken === 'string') {",
+              "  pm.collectionVariables.set('csrfToken', body.requestToken);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 — Sanatçı girişi",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-AF-CSRF",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{afLoginBody}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/auth/login",
+        "description": "Önce 01 isteğini gönder, userName ve password değişkenlerini kendi hesabına göre doldur. Hazır pre-request betiği, tırnak ve ters eğik çizgi gibi karakterleri doğru JSON kodlamasıyla gönderir. afLoginBody yalnızca geçici request/run scope içindedir; koleksiyon değişkenlerine kaydedilmez. Başarılı girişte cookie jar oturum çerezini saklar. Parolanı koleksiyonla birlikte paylaşma."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set('afLoginBody', JSON.stringify({",
+              "  userName: String(pm.variables.get('userName') ?? ''),",
+              "  password: String(pm.variables.get('password') ?? '')",
+              "}));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 — Yükleme seçenekleri",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/demos/options",
+        "description": "Giriş gerekir. maxFileSizeBytes, acceptedExtensions ve genres gelir."
+      }
+    },
+    {
+      "name": "04 — Yükleme öncesi CSRF token",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/csrf",
+        "description": "Login sonrası sanatçı oturumuna ait token al. Aynı cookie jar kullanılır."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (typeof body.requestToken === 'string') {",
+              "  pm.collectionVariables.set('csrfToken', body.requestToken);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 — Gerçek demo yükle",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-AF-CSRF",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "trackTitle",
+              "value": "{{trackTitle}}",
+              "type": "text"
+            },
+            {
+              "key": "genre",
+              "value": "{{genre}}",
+              "type": "text"
+            },
+            {
+              "key": "artistNote",
+              "value": "{{artistNote}}",
+              "type": "text"
+            },
+            {
+              "key": "rightsConfirmation",
+              "value": "true",
+              "type": "text"
+            },
+            {
+              "key": "audioFile",
+              "type": "file",
+              "src": [],
+              "description": "Select Files ile kendi MP3, PCM/float WAV veya FLAC kaydını seç. En fazla 100 MiB."
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/demos",
+        "description": "Önce 04 CSRF isteğini gönder. Body form-data: audioFile File, diğer alanlar Text. Kendi dosyanı seç. Content-Type başlığını elle ekleme; Postman multipart boundary üretir. 201 Created yanıtı dosya + kaydın saklandığını gösterir. Yeni kaydın id değeri demoId değişkenine alınır. ArtistId ve Status gönderilmez; sunucu belirler."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('demoId', '');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "  const body = pm.response.json();",
+              "  if (Number.isSafeInteger(body.id) && body.id > 0) {",
+              "    pm.collectionVariables.set('demoId', String(body.id));",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 — Kendi gönderimim",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/demos/{{demoId}}",
+        "description": "05 başarılıysa yeni demoId kullanılır. Metadata ve dosyanın SHA-256 özeti gelir. Başka sanatçıya ait id için 404."
+      }
+    },
+    {
+      "name": "07 — Kendi ses dosyam",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/demos/{{demoId}}/audio",
+        "description": "Yalnızca sahibi erişebilir. Yanıt JSON değil ses dosyasıdır. Byte-range desteklenir."
+      }
+    },
+    {
+      "name": "08 — Orijinali indir",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/demos/{{demoId}}/audio?download=true",
+        "description": "Send and Download veya Save Response ile orijinal dosyayı kaydedebilirsin. Cookie oturumu gerekir."
+      }
+    },
+    {
+      "name": "09 — Çıkış öncesi CSRF token",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/csrf",
+        "description": "Login ile kullanıcı kimliği değişti. Logout öncesinde token'ı mevcut giriş oturumuyla yeniden al. Girişten önceki token'ı tekrar kullanma."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (typeof body.requestToken === 'string') {",
+              "  pm.collectionVariables.set('csrfToken', body.requestToken);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 — Çıkış",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-AF-CSRF",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/logout",
+        "description": "Önce 09 token isteğini kullan. Çıkış 204 döndürür. Parola değişkenini kullandıktan sonra temizle."
+      }
+    }
+  ]
+}

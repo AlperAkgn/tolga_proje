@@ -1,0 +1,103 @@
+{
+  "info": {
+    "name": "AFTER/FORM — Step 5: Backend & MySQL",
+    "description": "Read-only development checks for the API and database foundation. Run the API and apply migrations before the readiness/schema checks.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "01 — API is running",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/health/live"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('API returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('API is alive', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 — MySQL and migrations are ready",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/health/ready"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Database returns 200 when ready', () => pm.response.to.have.status(200));",
+              "pm.test('MySQL is connected and schema current', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.database).to.eql('connected');",
+              "  pm.expect(body.schema).to.eql('upToDate');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 — Development schema",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/health/schema"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Development schema returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Artist and demo models are included', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.tables).to.include('AspNetUsers');",
+              "  pm.expect(body.tables).to.include('Demos');",
+              "  pm.expect(body.appliedMigrations.length).to.be.above(0);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

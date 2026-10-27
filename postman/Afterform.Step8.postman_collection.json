@@ -1,0 +1,258 @@
+{
+  "info": {
+    "name": "AFTER/FORM — Step 8: Demo Geçmişi ve Durum Takibi",
+    "description": "Gerçek sanatçı hesabıyla kendi demolarını listele, durum/arama filtresi kullan ve ayrıntıyı aç. İstekleri sırayla kullan. Demo yükleme bu koleksiyonda yok; 7. adım veya siteyi kullan. Cookie jar açık, Authorization No Auth. password bilerek boş. demoId değerini kendi liste yanıtından elle kopyala. CSRF betikleri yalnızca değişken aktarır; test assertion yoktur. Koleksiyon ajan tarafından çalıştırılmadı. Kullanım sonrası password değişkenini temizle.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "userName",
+      "value": "mira.sol",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "csrfToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "demoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "page",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "pageSize",
+      "value": "10",
+      "type": "string"
+    },
+    {
+      "key": "status",
+      "value": "Submitted",
+      "type": "string"
+    },
+    {
+      "key": "searchTerm",
+      "value": "Electronic",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "01 — Giriş öncesi CSRF token",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/csrf",
+        "description": "Önce bu isteği gönder. Yanıttaki requestToken, csrfToken değişkenine alınır; ilişkili çerez cookie jar'da tutulur."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (typeof body.requestToken === 'string') {",
+              "  pm.collectionVariables.set('csrfToken', body.requestToken);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 — Sanatçı girişi",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-AF-CSRF",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{afLoginBody}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/auth/login",
+        "description": "Önce 01 isteğini gönder, userName ve password değişkenlerini kendi hesabına göre doldur. Hazır pre-request betiği, tırnak ve ters eğik çizgi gibi karakterleri doğru JSON kodlamasıyla gönderir. afLoginBody yalnızca geçici request/run scope içindedir; koleksiyon değişkenlerine kaydedilmez. Başarılı girişte cookie jar oturum çerezini saklar. Parolanı koleksiyonla birlikte paylaşma."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set('afLoginBody', JSON.stringify({",
+              "  userName: String(pm.variables.get('userName') ?? ''),",
+              "  password: String(pm.variables.get('password') ?? '')",
+              "}));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 — Oturumdaki sanatçı",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/me",
+        "description": "Postman cookie oturumunun ait olduğu sanatçıyı gösterir. Tarayıcı oturumundan ayrıdır."
+      }
+    },
+    {
+      "name": "04 — Kendi demo geçmişim",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/demos?page={{page}}&pageSize={{pageSize}}",
+        "description": "Yalnızca giriş yapan sanatçının kayıtları. items içindeki bir id değerini demoId değişkenine kendin kopyala. summary hesabın bütün durum sayaçlarıdır. Hiç kayıt yoksa items boş olur."
+      }
+    },
+    {
+      "name": "05 — Duruma göre listele",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/demos?page={{page}}&pageSize={{pageSize}}&status={{status}}",
+        "description": "status: Submitted, InReview, Accepted veya Rejected. Bu durumda kayıt yoksa boş sonuç normaldir. summary arama/durum filtresinden bağımsızdır."
+      }
+    },
+    {
+      "name": "06 — Şarkı adı veya tür ara",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/demos?page={{page}}&pageSize={{pageSize}}&search={{searchTerm}}",
+        "description": "searchTerm ile başlık veya tür içinde arar. Params bölümünden status parametresi de eklenebilir. En fazla 100 karakter. Filtreyi değiştirirken page değerini 1 yap."
+      }
+    },
+    {
+      "name": "07 — Kendi demomun ayrıntısı",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/demos/{{demoId}}",
+        "description": "Önce gerçek listeden bir id alıp demoId değişkenine yaz. Başlık, tür, sanatçı notu, durum, tarihler ve dosya metaverisi gelir. Başka sanatçının kaydı veya bulunamayan id için aynı 404."
+      }
+    },
+    {
+      "name": "08 — Orijinali indir",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/demos/{{demoId}}/audio?download=true",
+        "description": "Cookie oturumuyla yalnızca kendi dosyanı indir. Yanıt JSON değil ses dosyasıdır; Send and Download / Save Response kullanabilirsin."
+      }
+    },
+    {
+      "name": "09 — Çıkış öncesi CSRF token",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/csrf",
+        "description": "Login ile kullanıcı kimliği değişti. Logout öncesinde token'ı mevcut giriş oturumuyla yeniden al. Girişten önceki token'ı tekrar kullanma."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (typeof body.requestToken === 'string') {",
+              "  pm.collectionVariables.set('csrfToken', body.requestToken);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 — Çıkış",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-AF-CSRF",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/logout",
+        "description": "Önce 09 token isteğini kullan. Çıkış 204 döndürür. Parola değişkenini kullandıktan sonra temizle."
+      }
+    }
+  ]
+}

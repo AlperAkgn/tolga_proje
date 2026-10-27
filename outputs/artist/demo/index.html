@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090a09">
+  <title>Demo Details — AFTER/FORM Artist Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/artist/portal.css">
+  <style>
+    .back-link { display: inline-block; margin-bottom: 35px; color: var(--muted); font: 9px var(--mono); letter-spacing: .08em; }
+    .back-link:hover { color: var(--fg); }
+    .page-intro { align-items: center; margin-bottom: 30px; }
+    h1 { max-width: 770px; font-size: clamp(44px, 7vw, 86px); line-height: 1.06; overflow-wrap: anywhere; }
+    .demo-heading { margin-bottom: 32px; }
+    .detail-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr); gap: 24px; }
+    .record-panel, .detail-panel { min-width: 0; border: 1px solid var(--line); background: #ffffff02; padding: clamp(24px, 3vw, 40px); }
+    .record-art { position: relative; display: grid; width: min(300px, 72%); aspect-ratio: 1; place-items: center; margin: 5px auto 40px; border: 1px solid #ffffff25; border-radius: 50%; background: radial-gradient(circle, #0b0c09 0 5%, #b8c294 5.5% 12%, #2b3024 12.5% 17%, transparent 17.5%), repeating-radial-gradient(circle, #ffffff1b 0 1px, transparent 2px 5px), conic-gradient(from 30deg, #141611, #34382c 20%, #10120e 43%, #515645 62%, #12140f 83%); box-shadow: 0 20px 55px #0005, inset 0 0 28px #0007; }
+    .record-art span { position: absolute; bottom: 22%; color: #d4d8cb; font: 8px var(--mono); letter-spacing: .15em; }
+    .panel-label { margin: 0 0 18px; color: var(--muted); font: 8px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    .audio-player { display: block; width: 100%; height: 44px; margin: 14px 0; }
+    .playback-note { color: #d9a49b; font-size: 11px; line-height: 1.7; }
+    .file-name { color: #c3c6ba; font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+    .download-link { display: inline-flex; margin-top: 12px; }
+    .status-copy { margin: 18px 0 28px; color: var(--muted); font-size: 12px; line-height: 1.8; }
+    .detail-panel .status-line { font-size: 17px; }
+    .metadata { margin: 0; border-top: 1px solid var(--line); }
+    .metadata div { display: grid; grid-template-columns: 95px minmax(0, 1fr); gap: 15px; border-bottom: 1px solid var(--line); padding: 16px 0; }
+    .metadata dt { color: var(--muted); font: 8px var(--mono); line-height: 1.8; text-transform: uppercase; }
+    .metadata dd { margin: 0; color: #d0d3c7; font-size: 11px; line-height: 1.7; overflow-wrap: anywhere; }
+    .artist-note { margin-top: 28px; }
+    .artist-note p:last-child { margin: 0; color: #b8bcb0; font-size: 12px; line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .privacy-copy { margin: 26px 0 0; color: #777d6e; font: 8px var(--mono); line-height: 1.9; }
+    a:focus-visible { outline: 2px solid var(--acid); outline-offset: 4px; }
+    @media (max-width: 720px) { .detail-grid { grid-template-columns: 1fr; } .page-intro .artist-card { margin-top: 0; } .record-art { width: min(270px, 72%); } }
+  </style>
+</head>
+<body data-auth-page="artist">
+  <header class="topbar">
+    <a class="brand" href="/">AFTER<span>/</span>FORM</a>
+    <div class="top-right">
+      <span class="top-label">Artist portal</span>
+      <a class="site-link" href="/artist/">My demos ↗</a>
+      <button class="sign-out" id="artistLogout" type="button" disabled>Sign out</button>
+    </div>
+  </header>
+  <div class="auth-status">
+    <p id="authMessage" role="status" aria-live="polite" aria-atomic="true" tabindex="-1">Opening your artist space…</p>
+    <button class="auth-retry" id="authRetry" type="button" hidden>Try again</button>
+    <noscript><p>Please enable JavaScript to open your artist account.</p></noscript>
+  </div>
+  <main class="dashboard" data-auth-content hidden>
+    <a class="back-link" href="/artist/">← BACK TO YOUR DEMOS</a>
+    <div class="page-intro">
+      <p class="eyebrow">AFTER/FORM / YOUR RECORDING</p>
+      <div class="artist-card" data-artist-card aria-label="Artist account">
+        <span class="avatar" data-artist-initials aria-hidden="true"></span>
+        <span>
+          <span class="artist-name" data-artist-name></span>
+          <span class="artist-username" data-artist-username></span>
+          <span class="artist-role">Artist account</span>
+        </span>
+      </div>
+    </div>
+    <p class="history-loading" id="detail-loading" role="status">Loading your recording…</p>
+    <div class="history-error" id="detail-error" role="alert" hidden>
+      <p id="detail-error-text"></p>
+      <button class="quiet-button" id="detail-retry" type="button">Try again</button>
+    </div>
+    <section id="demo-detail" aria-labelledby="demo-title" hidden>
+      <div class="demo-heading">
+        <h1 id="demo-title"></h1>
+        <p class="intro-copy" id="demo-subtitle"></p>
+      </div>
+      <div class="detail-grid">
+        <div class="record-panel">
+          <div class="record-art" aria-hidden="true"><span id="record-number"></span></div>
+          <p class="panel-label">Your original recording</p>
+          <p class="file-name" id="original-file"></p>
+          <audio class="audio-player" id="demo-audio" controls preload="none" aria-label="Play your demo"></audio>
+          <p class="playback-note" id="playback-note" role="status" hidden>This browser may not support this audio format, or the file is temporarily unavailable. You can try downloading the original; sign in again if your session has expired.</p>
+          <a class="send-demo download-link" id="demo-download" href="#">Download original ↓</a>
+          <p class="privacy-copy">This recording is available through your signed-in artist account.</p>
+        </div>
+        <div class="detail-panel">
+          <p class="panel-label">Current submission status</p>
+          <div id="demo-status" class="status-line"><i class="status-dot" aria-hidden="true"></i><span id="status-label"></span></div>
+          <p class="status-copy" id="status-copy"></p>
+          <dl class="metadata">
+            <div><dt>Submission</dt><dd id="demo-number"></dd></div>
+            <div><dt>Genre</dt><dd id="demo-genre"></dd></div>
+            <div><dt>Submitted</dt><dd id="demo-submitted"></dd></div>
+            <div><dt>Last update</dt><dd id="demo-updated"></dd></div>
+            <div><dt>File size</dt><dd id="demo-size"></dd></div>
+          </dl>
+          <div class="artist-note">
+            <p class="panel-label">Your submission note</p>
+            <p id="demo-note"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="footnote">
+      <span id="detail-refreshed">Times shown in your local time</span>
+      <button class="quiet-button" id="detail-refresh" type="button" disabled>Refresh status ↻</button>
+    </div>
+  </main>
+  <script src="/artist/auth.js" defer></script>
+  <script src="/artist/demos-common.js" defer></script>
+  <script src="/artist/demo/detail.js" defer></script>
+</body>
+</html>

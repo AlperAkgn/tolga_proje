@@ -1,0 +1,4734 @@
+{
+  "info": {
+    "name": "AFTER/FORM — Step 9: Artist Access and Error Checks",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Local integration checks with two fresh QA artists, synthetic WAV and invalid fixtures. Use scripts/Test-ArtistSecurity.ps1 for automatic setup/execution. Each folder needs a fresh test-server process: rate counters are per process. For manual Postman runs, use separate QA accounts and restart the test server before EVERY folder; do not run all folders consecutively against your everyday server. Passwords are intentionally blank. File and hash variables are prepared by the local runner. No environment/cookie/credential export."
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5019",
+      "type": "string"
+    },
+    {
+      "key": "userNameA",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "passwordA",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userNameB",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "passwordB",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "artistIdA",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "artistIdB",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "demoIdA",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "demoIdB",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "csrfToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "unknownUser",
+      "value": "qa9.nonexistent",
+      "type": "string"
+    },
+    {
+      "key": "trackTitleA",
+      "value": "QA9 A recording",
+      "type": "string"
+    },
+    {
+      "key": "trackTitleB",
+      "value": "QA9 B recording",
+      "type": "string"
+    },
+    {
+      "key": "searchMarker",
+      "value": "QA9",
+      "type": "string"
+    },
+    {
+      "key": "fileSha256",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "fileSizeBytes",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "validFile",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "emptyFile",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "invalidExtensionFile",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "fakeAudioFile",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "oversizedFile",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 — Sessions and ownership",
+      "description": "Run with two fresh QA artists. Each folder needs a fresh test server; the local runner handles this automatically.",
+      "item": [
+        {
+          "name": "01 — Backend readiness",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/health/ready",
+            "description": "Backend readiness"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  pm.test('MySQL connected and migrations applied', () => {",
+                  "    const body = pm.response.json(); pm.expect(body.database).to.eql('connected'); pm.expect(body.schema).to.eql('upToDate');",
+                  "  });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 — Anonymous: Session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "Anonymous: Session"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 — Anonymous: History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Anonymous: History"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 — Anonymous: Options",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/options",
+            "description": "Anonymous: Options"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 — Anonymous: Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/1",
+            "description": "Anonymous: Detail"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 — Anonymous: Audio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/1/audio",
+            "description": "Anonymous: Audio"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 — Anonymous: Download",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/1/audio?download=true",
+            "description": "Anonymous: Download"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 — Anonymous upload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Anonymous upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleA}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 — Protected artist HTML redirects to login",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/artist/demo/?id=1",
+            "description": "Protected artist HTML redirects to login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 302', () => pm.response.to.have.status(302));",
+                  "",
+                  "  pm.test('Redirect is the login page', () => pm.expect(pm.response.headers.get('Location')).to.eql('/artist/login/'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 — Anonymous login CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "Anonymous login CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 — Login without CSRF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login without CSRF",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameA'), password: pm.environment.get('passwordA') }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 — Login with invalid CSRF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "invalid-token"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login with invalid CSRF",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameA'), password: pm.environment.get('passwordA') }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 — Unknown username has generic error",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Unknown username has generic error",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('unknownUser'), password: 'nonexistent-user-password' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "",
+                  "    pm.test('No account existence detail', () => pm.expect(pm.response.json().title).to.eql('Sign-in unsuccessful.'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 — A: login CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "A: login CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15 — A: successful login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "A: successful login",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameA'), password: pm.environment.get('passwordA') }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "      if (pm.response.code === 200) pm.environment.set('artistIdA', pm.response.json().id);",
+                  "      pm.test('The signed-in artist is A', () => pm.expect(pm.response.json().userName).to.eql(pm.environment.get('userNameA')));",
+                  "      pm.test('Session cookie is HttpOnly, Lax and scoped to /', () => {",
+                  "        const cookie = pm.response.headers.all().filter(h => h.key.toLowerCase() === 'set-cookie').map(h => h.value).find(v => v.startsWith('afterform.artist='));",
+                  "        pm.expect(cookie).to.be.a('string');",
+                  "        pm.expect(cookie.toLowerCase()).to.include('httponly').and.include('samesite=lax').and.include('path=/');",
+                  "      });",
+                  "      pm.test('Login does not return password or hash', () => {",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body).not.to.have.property('password');",
+                  "        pm.expect(body).not.to.have.property('passwordHash');",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16 — A: authenticated CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "A: authenticated CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17 — A: initial archive is empty",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "A: initial archive is empty"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  const body = pm.response.json();",
+                  "  pm.test('List and rows belong to A', () => {",
+                  "    pm.expect(body.artistId).to.eql(pm.environment.get('artistIdA'));",
+                  "    pm.expect(body.items).to.be.an('array');",
+                  "    body.items.forEach(d => pm.expect(d.artistId).to.eql(body.artistId));",
+                  "  });",
+                  "  pm.test('Fresh A fixture has 0 demos', () => { pm.expect(body.summary.total).to.eql(0); pm.expect(body.totalCount).to.eql(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18 — A: session is private",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "A: session is private"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  pm.test('Private session has no-store', () => pm.expect(pm.response.headers.get('Cache-Control')).to.include('no-store'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19 — A: submit synthetic WAV",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleA}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "",
+                  "  if (pm.response.code === 201) pm.environment.set('demoIdA', String(pm.response.json().id));",
+                  "  pm.test('Ownership comes from the session and initial status is Submitted', () => {",
+                  "    const d = pm.response.json();",
+                  "    pm.expect(d.artistId).to.eql(pm.environment.get('artistIdA'));",
+                  "    pm.expect(d.status).to.eql('Submitted');",
+                  "    pm.expect(d.fileSha256.toLowerCase()).to.eql(pm.environment.get('fileSha256'));",
+                  "    pm.expect(d.fileSizeBytes).to.eql(Number(pm.environment.get('fileSizeBytes')));",
+                  "    pm.expect(d.submittedAtUtc).to.match(/Z$/);",
+                  "    pm.expect(d).not.to.have.property('storageKey');",
+                  "  });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "20 — A: own history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos?page=1&pageSize=10",
+            "description": "A: own history"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  const body = pm.response.json();",
+                  "  pm.test('List and rows belong to A', () => {",
+                  "    pm.expect(body.artistId).to.eql(pm.environment.get('artistIdA'));",
+                  "    pm.expect(body.items).to.be.an('array');",
+                  "    body.items.forEach(d => pm.expect(d.artistId).to.eql(body.artistId));",
+                  "  });",
+                  "  pm.test('Fresh A fixture has 1 demos', () => { pm.expect(body.summary.total).to.eql(1); pm.expect(body.totalCount).to.eql(1); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "21 — A: own detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/{{demoIdA}}",
+            "description": "A: own detail"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  pm.test('Artist note is returned as text', () => pm.expect(pm.response.json().description).to.eql('QA9: synthetic audio; <strong>plain text note</strong>'));",
+                  "  pm.test('Own demo is returned', () => pm.expect(String(pm.response.json().id)).to.eql(pm.environment.get('demoIdA')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "22 — [SHA-A] A: original download",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/{{demoIdA}}/audio?download=true",
+            "description": "[SHA-A] A: original download"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  pm.test('Audio is private and cannot be MIME-sniffed', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('audio/wav');",
+                  "    pm.expect(pm.response.headers.get('Cache-Control')).to.include('no-store').and.include('private');",
+                  "    pm.expect(pm.response.headers.get('X-Content-Type-Options')).to.eql('nosniff');",
+                  "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment');",
+                  "  });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "23 — [RANGE-A] A: first 16 audio bytes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Range",
+                "value": "bytes=0-15"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/{{demoIdA}}/audio",
+            "description": "[RANGE-A] A: first 16 audio bytes"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 206', () => pm.response.to.have.status(206));",
+                  "",
+                  "    pm.test('Range metadata is correct', () => pm.expect(pm.response.headers.get('Content-Range')).to.eql('bytes 0-15/' + pm.environment.get('fileSizeBytes')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "24 — A: Submitted filter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos?status=Submitted",
+            "description": "A: Submitted filter"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  pm.test('Only submitted fixtures are present', () => {",
+                  "    const b = pm.response.json(); pm.expect(b.totalCount).to.eql(1); b.items.forEach(d => pm.expect(d.status).to.eql('Submitted'));",
+                  "  });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "25 — A: Accepted filter is empty",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos?status=Accepted",
+            "description": "A: Accepted filter is empty"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  pm.test('Filtered count and account count differ correctly', () => {",
+                  "    const b = pm.response.json(); pm.expect(b.items).to.have.lengthOf(0); pm.expect(b.totalCount).to.eql(0); pm.expect(b.summary.total).to.eql(1);",
+                  "  });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "26 — A: search finds the fixture",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos?search={{searchMarker}}",
+            "description": "A: search finds the fixture"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  const body = pm.response.json();",
+                  "  pm.test('List and rows belong to A', () => {",
+                  "    pm.expect(body.artistId).to.eql(pm.environment.get('artistIdA'));",
+                  "    pm.expect(body.items).to.be.an('array');",
+                  "    body.items.forEach(d => pm.expect(d.artistId).to.eql(body.artistId));",
+                  "  });",
+                  "  pm.test('Fresh A fixture has 1 demos', () => { pm.expect(body.summary.total).to.eql(1); pm.expect(body.totalCount).to.eql(1); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "27 — A: SQL-like search stays an ordinary search",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos?search=%27%20OR%201%3D1%20--",
+            "description": "A: SQL-like search stays an ordinary search"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  pm.test('No search match or ownership bypass', () => { const b = pm.response.json(); pm.expect(b.items).to.have.lengthOf(0); pm.expect(b.summary.total).to.eql(1); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "28 — Invalid query: page zero",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos?page=0",
+            "description": "Invalid query: page zero"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "29 — Invalid query: page size 51",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos?pageSize=51",
+            "description": "Invalid query: page size 51"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "30 — Invalid query: unknown status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos?status=Approved",
+            "description": "Invalid query: unknown status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "31 — Invalid query: numeric status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos?status=0",
+            "description": "Invalid query: numeric status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "32 — Invalid query: long search",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos?search=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "description": "Invalid query: long search"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "33 — A: large valid page clamps to final page",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos?page=1000000",
+            "description": "A: large valid page clamps to final page"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  pm.test('Effective page is 1', () => pm.expect(pm.response.json().page).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "34 — Logout without CSRF is rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout",
+            "description": "Logout without CSRF is rejected"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "35 — A: rejected logout preserves session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "A: rejected logout preserves session"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "36 — Current session CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "Current session CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "37 — A: sign out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout",
+            "description": "A: sign out"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "38 — Session after logout",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "Session after logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "39 — Anonymous cannot use the previous audio URL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/{{demoIdA}}/audio",
+            "description": "Anonymous cannot use the previous audio URL"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "40 — B: login CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "B: login CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "41 — B: successful login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "B: successful login",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameB'), password: pm.environment.get('passwordB') }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "      if (pm.response.code === 200) pm.environment.set('artistIdB', pm.response.json().id);",
+                  "      pm.test('The signed-in artist is B', () => pm.expect(pm.response.json().userName).to.eql(pm.environment.get('userNameB')));",
+                  "      pm.test('Session cookie is HttpOnly, Lax and scoped to /', () => {",
+                  "        const cookie = pm.response.headers.all().filter(h => h.key.toLowerCase() === 'set-cookie').map(h => h.value).find(v => v.startsWith('afterform.artist='));",
+                  "        pm.expect(cookie).to.be.a('string');",
+                  "        pm.expect(cookie.toLowerCase()).to.include('httponly').and.include('samesite=lax').and.include('path=/');",
+                  "      });",
+                  "      pm.test('Login does not return password or hash', () => {",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body).not.to.have.property('password');",
+                  "        pm.expect(body).not.to.have.property('passwordHash');",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "42 — B: authenticated CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "B: authenticated CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "43 — B: own synthetic WAV",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleB}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "",
+                  "  if (pm.response.code === 201) pm.environment.set('demoIdB', String(pm.response.json().id));",
+                  "  pm.test('Ownership comes from the session and initial status is Submitted', () => {",
+                  "    const d = pm.response.json();",
+                  "    pm.expect(d.artistId).to.eql(pm.environment.get('artistIdB'));",
+                  "    pm.expect(d.status).to.eql('Submitted');",
+                  "    pm.expect(d.fileSha256.toLowerCase()).to.eql(pm.environment.get('fileSha256'));",
+                  "    pm.expect(d.fileSizeBytes).to.eql(Number(pm.environment.get('fileSizeBytes')));",
+                  "    pm.expect(d.submittedAtUtc).to.match(/Z$/);",
+                  "    pm.expect(d).not.to.have.property('storageKey');",
+                  "  });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "44 — B: forged ArtistId and Accepted status are ignored",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleB}} forged fields",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                },
+                {
+                  "key": "ArtistId",
+                  "value": "{{artistIdA}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Status",
+                  "value": "Accepted",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "",
+                  "  if (pm.response.code === 201) pm.environment.set('forgedDemoIdB', String(pm.response.json().id));",
+                  "  pm.test('Ownership comes from the session and initial status is Submitted', () => {",
+                  "    const d = pm.response.json();",
+                  "    pm.expect(d.artistId).to.eql(pm.environment.get('artistIdB'));",
+                  "    pm.expect(d.status).to.eql('Submitted');",
+                  "    pm.expect(d.fileSha256.toLowerCase()).to.eql(pm.environment.get('fileSha256'));",
+                  "    pm.expect(d.fileSizeBytes).to.eql(Number(pm.environment.get('fileSizeBytes')));",
+                  "    pm.expect(d.submittedAtUtc).to.match(/Z$/);",
+                  "    pm.expect(d).not.to.have.property('storageKey');",
+                  "  });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "45 — B: own archive even with another ArtistId in query",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos?artistId={{artistIdA}}",
+            "description": "B: own archive even with another ArtistId in query"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  const body = pm.response.json();",
+                  "  pm.test('List and rows belong to B', () => {",
+                  "    pm.expect(body.artistId).to.eql(pm.environment.get('artistIdB'));",
+                  "    pm.expect(body.items).to.be.an('array');",
+                  "    body.items.forEach(d => pm.expect(d.artistId).to.eql(body.artistId));",
+                  "  });",
+                  "  pm.test('Fresh B fixture has 2 demos', () => { pm.expect(body.summary.total).to.eql(2); pm.expect(body.totalCount).to.eql(2); });",
+                  "",
+                  "  pm.test('A demo is absent from B list', () => pm.response.json().items.forEach(d => pm.expect(String(d.id)).not.to.eql(pm.environment.get('demoIdA'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "46 — B cannot access A detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/{{demoIdA}}",
+            "description": "B cannot access A detail"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "47 — B cannot access A /audio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/{{demoIdA}}/audio",
+            "description": "B cannot access A /audio"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "48 — B cannot access A /audio?download=true",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/{{demoIdA}}/audio?download=true",
+            "description": "B cannot access A /audio?download=true"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "49 — B: nonexistent ID also returns 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/9223372036854775807",
+            "description": "B: nonexistent ID also returns 404"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "50 — B: own detail remains accessible",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/{{demoIdB}}",
+            "description": "B: own detail remains accessible"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "51 — Current session CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "Current session CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "52 — B: sign out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout",
+            "description": "B: sign out"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "53 — Session after logout",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "Session after logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "54 — A: login CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "A: login CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "55 — A: successful login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "A: successful login",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameA'), password: pm.environment.get('passwordA') }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "      if (pm.response.code === 200) pm.environment.set('artistIdA', pm.response.json().id);",
+                  "      pm.test('The signed-in artist is A', () => pm.expect(pm.response.json().userName).to.eql(pm.environment.get('userNameA')));",
+                  "      pm.test('Session cookie is HttpOnly, Lax and scoped to /', () => {",
+                  "        const cookie = pm.response.headers.all().filter(h => h.key.toLowerCase() === 'set-cookie').map(h => h.value).find(v => v.startsWith('afterform.artist='));",
+                  "        pm.expect(cookie).to.be.a('string');",
+                  "        pm.expect(cookie.toLowerCase()).to.include('httponly').and.include('samesite=lax').and.include('path=/');",
+                  "      });",
+                  "      pm.test('Login does not return password or hash', () => {",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body).not.to.have.property('password');",
+                  "        pm.expect(body).not.to.have.property('passwordHash');",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "56 — A: authenticated CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "A: authenticated CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "57 — A cannot access B detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/{{demoIdB}}",
+            "description": "A cannot access B detail"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "58 — A cannot access B /audio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/{{demoIdB}}/audio",
+            "description": "A cannot access B /audio"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "59 — A cannot access B /audio?download=true",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos/{{demoIdB}}/audio?download=true",
+            "description": "A cannot access B /audio?download=true"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "60 — A: archive is still only A",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "A: archive is still only A"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  const body = pm.response.json();",
+                  "  pm.test('List and rows belong to A', () => {",
+                  "    pm.expect(body.artistId).to.eql(pm.environment.get('artistIdA'));",
+                  "    pm.expect(body.items).to.be.an('array');",
+                  "    body.items.forEach(d => pm.expect(d.artistId).to.eql(body.artistId));",
+                  "  });",
+                  "  pm.test('Fresh A fixture has 1 demos', () => { pm.expect(body.summary.total).to.eql(1); pm.expect(body.totalCount).to.eql(1); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "61 — Current session CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "Current session CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "62 — A: final sign out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout",
+            "description": "A: final sign out"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "63 — Session after logout",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "Session after logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 — Upload validation",
+      "description": "Fresh server counters required. Six invalid attempts per account, then the seventh must return 429. No invalid upload should create a record.",
+      "item": [
+        {
+          "name": "64 — A: login CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "A: login CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "65 — A: successful login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "A: successful login",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameA'), password: pm.environment.get('passwordA') }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "      if (pm.response.code === 200) pm.environment.set('artistIdA', pm.response.json().id);",
+                  "      pm.test('The signed-in artist is A', () => pm.expect(pm.response.json().userName).to.eql(pm.environment.get('userNameA')));",
+                  "      pm.test('Session cookie is HttpOnly, Lax and scoped to /', () => {",
+                  "        const cookie = pm.response.headers.all().filter(h => h.key.toLowerCase() === 'set-cookie').map(h => h.value).find(v => v.startsWith('afterform.artist='));",
+                  "        pm.expect(cookie).to.be.a('string');",
+                  "        pm.expect(cookie.toLowerCase()).to.include('httponly').and.include('samesite=lax').and.include('path=/');",
+                  "      });",
+                  "      pm.test('Login does not return password or hash', () => {",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body).not.to.have.property('password');",
+                  "        pm.expect(body).not.to.have.property('passwordHash');",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "66 — A: authenticated CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "A: authenticated CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "67 — A: record count before invalid uploads",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "A: record count before invalid uploads"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.environment.set('beforeInvalidA', String(pm.response.json().summary.total));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "68 — A: missing upload CSRF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleA}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "69 — A: no file",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleA}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "70 — A: empty WAV",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleA}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{emptyFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "71 — A: disallowed extension",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleA}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{invalidExtensionFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "72 — A: text renamed to WAV",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleA}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{fakeAudioFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "73 — A: rights confirmation false",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleA}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "74 — A: seventh upload request is limited",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleA}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 429', () => pm.response.to.have.status(429));",
+                  "",
+                  "  pm.test('Rate limit has Retry-After', () => pm.expect(Number(pm.response.headers.get('Retry-After'))).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "75 — A: invalid uploads did not insert demos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "A: invalid uploads did not insert demos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  pm.test('A count unchanged', () => pm.expect(pm.response.json().summary.total).to.eql(Number(pm.environment.get('beforeInvalidA'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "76 — Current session CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "Current session CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "77 — A: sign out after validation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout",
+            "description": "A: sign out after validation"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "78 — Session after logout",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "Session after logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "79 — B: login CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "B: login CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "80 — B: successful login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "B: successful login",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameB'), password: pm.environment.get('passwordB') }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "      if (pm.response.code === 200) pm.environment.set('artistIdB', pm.response.json().id);",
+                  "      pm.test('The signed-in artist is B', () => pm.expect(pm.response.json().userName).to.eql(pm.environment.get('userNameB')));",
+                  "      pm.test('Session cookie is HttpOnly, Lax and scoped to /', () => {",
+                  "        const cookie = pm.response.headers.all().filter(h => h.key.toLowerCase() === 'set-cookie').map(h => h.value).find(v => v.startsWith('afterform.artist='));",
+                  "        pm.expect(cookie).to.be.a('string');",
+                  "        pm.expect(cookie.toLowerCase()).to.include('httponly').and.include('samesite=lax').and.include('path=/');",
+                  "      });",
+                  "      pm.test('Login does not return password or hash', () => {",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body).not.to.have.property('password');",
+                  "        pm.expect(body).not.to.have.property('passwordHash');",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "81 — B: authenticated CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "B: authenticated CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "82 — B: record count before invalid uploads",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "B: record count before invalid uploads"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.environment.set('beforeInvalidB', String(pm.response.json().summary.total));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "83 — B: blank title",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "   ",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "84 — B: title longer than 100",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "85 — B: unsupported genre",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleB}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "NotAllowedGenre",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "86 — B: two audio files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleB}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "87 — B: oversized request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleB}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{oversizedFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 or 413', () => pm.expect(pm.response.code).to.be.oneOf([400,413]));",
+                  "",
+                  "  pm.test('Rejection is specifically caused by the size limit', () => {",
+                  "    if (pm.response.code === 413) return;",
+                  "    pm.expect(pm.response.code).to.eql(400);",
+                  "    const messages = Object.values(pm.response.json().errors || {}).flat();",
+                  "    pm.expect(messages.some(message => typeof message === 'string' &&",
+                  "      /(multipart body length limit|request body too large|maximum request body size|body length limit|audio file.*(?:larger than|exceed))/i.test(message))).to.eql(true);",
+                  "  });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "88 — B: note longer than 500",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleB}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "89 — B: seventh upload request is limited",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "Local synthetic fixture only. Content-Type is generated by Postman. Invalid attempts also count toward the upload limit.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trackTitle",
+                  "value": "{{trackTitleB}}",
+                  "type": "text"
+                },
+                {
+                  "key": "genre",
+                  "value": "Electronic",
+                  "type": "text"
+                },
+                {
+                  "key": "artistNote",
+                  "value": "QA9: synthetic audio; <strong>plain text note</strong>",
+                  "type": "text"
+                },
+                {
+                  "key": "rightsConfirmation",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "audioFile",
+                  "type": "file",
+                  "src": "{{validFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 429', () => pm.response.to.have.status(429));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "90 — B: invalid uploads did not insert demos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/demos",
+            "description": "B: invalid uploads did not insert demos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "  pm.test('B count unchanged', () => pm.expect(pm.response.json().summary.total).to.eql(Number(pm.environment.get('beforeInvalidB'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "91 — Current session CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "Current session CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "92 — B: sign out after validation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout",
+            "description": "B: sign out after validation"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "93 — Session after logout",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "Session after logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 — Account lockout",
+      "description": "Only throwaway B is used for wrong-password attempts. Requires a fresh server to avoid IP throttling. B stays locked for 15 minutes.",
+      "item": [
+        {
+          "name": "94 — B: anonymous CSRF for wrong-password attempts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "B: anonymous CSRF for wrong-password attempts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "95 — B: wrong password 1/5",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "B: wrong password 1/5",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameB'), password: 'deliberately-wrong-password-qa9' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "",
+                  "    pm.test('Generic login error', () => pm.expect(pm.response.json().title).to.eql('Sign-in unsuccessful.'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "96 — B: wrong password 2/5",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "B: wrong password 2/5",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameB'), password: 'deliberately-wrong-password-qa9' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "",
+                  "    pm.test('Generic login error', () => pm.expect(pm.response.json().title).to.eql('Sign-in unsuccessful.'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "97 — B: wrong password 3/5",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "B: wrong password 3/5",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameB'), password: 'deliberately-wrong-password-qa9' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "",
+                  "    pm.test('Generic login error', () => pm.expect(pm.response.json().title).to.eql('Sign-in unsuccessful.'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "98 — B: wrong password 4/5",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "B: wrong password 4/5",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameB'), password: 'deliberately-wrong-password-qa9' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "",
+                  "    pm.test('Generic login error', () => pm.expect(pm.response.json().title).to.eql('Sign-in unsuccessful.'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "99 — B: wrong password 5/5",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "B: wrong password 5/5",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameB'), password: 'deliberately-wrong-password-qa9' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "",
+                  "    pm.test('Generic login error', () => pm.expect(pm.response.json().title).to.eql('Sign-in unsuccessful.'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "100 — B: correct password during lockout is rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "B: correct password during lockout is rejected",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameB'), password: pm.environment.get('passwordB') }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "101 — B: lockout did not create a session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "B: lockout did not create a session"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "102 — A: login CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "A: login CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "103 — A: successful login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "A: successful login",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('userNameA'), password: pm.environment.get('passwordA') }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "      if (pm.response.code === 200) pm.environment.set('artistIdA', pm.response.json().id);",
+                  "      pm.test('The signed-in artist is A', () => pm.expect(pm.response.json().userName).to.eql(pm.environment.get('userNameA')));",
+                  "      pm.test('Session cookie is HttpOnly, Lax and scoped to /', () => {",
+                  "        const cookie = pm.response.headers.all().filter(h => h.key.toLowerCase() === 'set-cookie').map(h => h.value).find(v => v.startsWith('afterform.artist='));",
+                  "        pm.expect(cookie).to.be.a('string');",
+                  "        pm.expect(cookie.toLowerCase()).to.include('httponly').and.include('samesite=lax').and.include('path=/');",
+                  "      });",
+                  "      pm.test('Login does not return password or hash', () => {",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body).not.to.have.property('password');",
+                  "        pm.expect(body).not.to.have.property('passwordHash');",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "104 — A: authenticated CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "A: authenticated CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "105 — A: B lockout does not lock A",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "A: B lockout does not lock A"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "106 — Current session CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "Current session CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "107 — A: sign out after lockout checks",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout",
+            "description": "A: sign out after lockout checks"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "108 — Session after logout",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "Session after logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 — Login rate limit",
+      "description": "Fresh server, empty cookie jar. Ten attempts use a nonexistent username; attempt eleven must return 429 without locking an artist.",
+      "item": [
+        {
+          "name": "109 — Anonymous rate-limit CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/csrf",
+            "description": "Anonymous rate-limit CSRF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "    pm.test('Request token is present', () => pm.expect(pm.response.json().requestToken).to.be.a('string').and.not.empty);",
+                  "    if (pm.response.code === 200) pm.environment.set('csrfToken', pm.response.json().requestToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "110 — Login request 1/11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login request 1/11",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('unknownUser'), password: 'nonexistent-user-password' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "111 — Login request 2/11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login request 2/11",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('unknownUser'), password: 'nonexistent-user-password' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "112 — Login request 3/11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login request 3/11",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('unknownUser'), password: 'nonexistent-user-password' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "113 — Login request 4/11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login request 4/11",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('unknownUser'), password: 'nonexistent-user-password' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "114 — Login request 5/11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login request 5/11",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('unknownUser'), password: 'nonexistent-user-password' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "115 — Login request 6/11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login request 6/11",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('unknownUser'), password: 'nonexistent-user-password' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "116 — Login request 7/11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login request 7/11",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('unknownUser'), password: 'nonexistent-user-password' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "117 — Login request 8/11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login request 8/11",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('unknownUser'), password: 'nonexistent-user-password' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "118 — Login request 9/11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login request 9/11",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('unknownUser'), password: 'nonexistent-user-password' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "119 — Login request 10/11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login request 10/11",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('unknownUser'), password: 'nonexistent-user-password' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "120 — Login request 11/11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-AF-CSRF",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login request 11/11",
+            "body": {
+              "mode": "raw",
+              "raw": "{{afRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('afRequestBody', JSON.stringify({ userName: pm.environment.get('unknownUser'), password: 'nonexistent-user-password' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 429', () => pm.response.to.have.status(429));",
+                  "pm.test('Retry-After is provided', () => pm.expect(Number(pm.response.headers.get('Retry-After'))).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
